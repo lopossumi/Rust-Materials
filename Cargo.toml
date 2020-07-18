@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 image = "0.23.7"
 assert_approx_eq = "1.1.0"
+rand = "0.7.3"
