@@ -4,11 +4,11 @@ use crate::hittable::{ Record, Hittable };
 
 pub struct Sphere {
     center: Vec3,
-    radius: f64,
+    radius: f32,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f64) -> Sphere {
+    pub fn new(center: Vec3, radius: f32) -> Sphere {
         Sphere { 
             center: center, 
             radius : radius
@@ -17,7 +17,7 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Record> {
+    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Record> {
         let oc = ray.origin - self.center;
         let a = ray.direction.length_squared();
         let half_b = oc.dot(ray.direction);

@@ -39,7 +39,7 @@ With 50 samples everything is a lot smoother (while taking 10 times as long):
 
 So how long is that, and what can we do about it?
 
-## Benchmarking
+## Optimization
 
 There are a few benchmarking tools for Rust, but let's start with a simple timer and a print statement to the error output:
 ```rust
@@ -49,18 +49,14 @@ There are a few benchmarking tools for Rust, but let's start with a simple timer
 ```
 ```
 PS D:\RustProjects\materials> cargo run
-    Finished dev [unoptimized + debuginfo] target(s) in 0.10s
-     Running `target\debug\rays.exe`
 Elapsed: 9.5592981s
 Done.
 ```
-So with 50 samples the rendering takes 9.6 seconds on Ryzen 3400G. Not great, not terrible.
+So with 50 samples the rendering takes 9.6 seconds on a Ryzen 3400G. Not great, not terrible.
 
-But wait, we are running it in debug mode. How about if we switch to release mode?
+But wait, we are running it in debug mode. How about if we switch to release?
 ```
 PS D:\RustProjects\materials> cargo run --release
-    Finished release [optimized] target(s) in 0.09s
-     Running `target\release\rays.exe`
 Elapsed: 246.4353ms
 Done.
 ```
@@ -69,8 +65,6 @@ So we get almost a 40x speedup for free, just by remembering to use the right co
 Upping the resolution to 1920 x 1080, it takes 6.2 seconds on average to render two balls with 50 samples per pixel:
 ```
 PS D:\RustProjects\materials> cargo run --release
-    Finished release [optimized] target(s) in 0.11s
-     Running `target\release\rays.exe`
 Elapsed: 6.3509268s
 Done.
 ```
@@ -99,7 +93,7 @@ So even though image_width is constant, the compiler can't know it (because we *
 
 A two-dimensional vector sounds like a mess of pointers, but how about a ```Vec<Color>``` and some smart indexing?
 ```rust
-    let colors: Vec<Color> = (0..(image_height * image_width))
+    let colors: Vec<Color> = (0..image_height * image_width)
         .into_iter()
         .map(|index| {
             let x = index % image_width;
@@ -117,12 +111,10 @@ A two-dimensional vector sounds like a mess of pointers, but how about a ```Vec<
 ```
 ```
 PS D:\RustProjects\materials> cargo run --release
-    Finished release [optimized] target(s) in 0.11s
-     Running `target\release\materials.exe`
 Elapsed: 6.121465s
 Done.
 ```
-No change. But now that we have an iterator in the mix, we can just throw more cores at the problem with [rayon](https://crates.io/crates/rayon). This is actually a bit too easy - just change ```into_iter``` to ```into_par_iter```:
+No change. But now that we have an iterator in the mix, we can just throw more cores at the problem with [rayon](https://crates.io/crates/rayon). This is so easy it feels like cheating - just switch ```into_iter``` with ```into_par_iter```:
 ```rust
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 ...
@@ -138,8 +130,29 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 ```
 ```
 PS D:\RustProjects\materials> cargo run --release
-    Finished release [optimized] target(s) in 0.10s
-     Running `target\release\materials.exe`
 Elapsed: 1.2618604s
 Done.
 ```
+With 1000 samples:
+```
+PS D:\RustProjects\materials> cargo run --release
+Elapsed: 24.0086908s
+Done.
+```
+How about changing all the doubles to floats - half the size, twice the speed? Not quite, but still worth doing:
+```
+PS D:\RustProjects\materials> cargo run --release
+Elapsed: 19.3472669s
+Done.
+```
+Another 20% shaved. The original 384 pixel wide image takes just 40ms to render, and we're done for now.
+
+## Diffuse spheres
+
+I was able to implement [lambertian reflection](https://raytracing.github.io/books/RayTracingInOneWeekend.html#diffusematerials/truelambertianreflection) without much difficulties. One thing to note is that now that the program is multi-threaded, we need to be a bit more careful with e.g. random number generation: I opted to create the ```thread_rng``` inside the parallel loop, and to borrow it around within scope.
+
+![two_spheres_lambertian.png](two_spheres_lambertian.png)
+
+## Materials
+
+TODO: Write me!

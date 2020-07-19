@@ -1,54 +1,50 @@
+use std::f32::consts::PI;
 use core::fmt;
-use std::ops::{Add, Sub, Neg, Mul, Div};
+use rand::prelude::*;
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 pub type Point3 = Vec3;
 pub type Color = Vec3;
 
 #[derive(Clone, Copy)]
 pub struct Vec3 {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
 }
 
 impl Vec3 {
-    pub fn new(x: f64, y: f64, z: f64) -> Vec3 {
+    pub fn new(x: f32, y: f32, z: f32) -> Vec3 {
         Vec3 { x, y, z }
     }
 
-    pub fn dot(&self, other: Vec3) -> f64 {
-        self.x * other.x 
-        + self.y * other.y 
-        + self.z * other.z
+    pub fn dot(&self, other: Vec3) -> f32 {
+        self.x * other.x + self.y * other.y + self.z * other.z
     }
 
     pub fn cross(&self, other: Vec3) -> Vec3 {
-        Vec3{
+        Vec3 {
             x: self.y * other.z - self.z * other.y,
             y: self.z * other.x - self.x * other.z,
-            z: self.x * other.y - self.y * other.x
+            z: self.x * other.y - self.y * other.x,
         }
     }
 
-    pub fn length_squared(&self) -> f64 {
-        self.x * self.x 
-        + self.y * self.y 
-        + self.z * self.z
+    pub fn length_squared(&self) -> f32 {
+        self.x * self.x + self.y * self.y + self.z * self.z
     }
 
-    pub fn length(&self) -> f64 {
+    pub fn length(&self) -> f32 {
         self.length_squared().sqrt()
     }
 
     pub fn to_rgb(&self) -> [u8; 3] {
-        fn f(num: f64) -> u8 {
-            if num < 0.0 { 
+        fn f(num: f32) -> u8 {
+            if num < 0.0 {
                 0
-            }
-            else if num >= 1.0 {
+            } else if num >= 1.0 {
                 255
-            }
-            else {
+            } else {
                 (num * 255.99) as u8
             }
         }
@@ -58,15 +54,26 @@ impl Vec3 {
     pub fn unit_vector(self) -> Vec3 {
         self / self.length()
     }
+
+    pub fn random(rng: &mut ThreadRng) -> Vec3 {
+        let a: f32 = rng.gen_range(0.0, 2.0 * PI);
+        let z: f32 = rng.gen_range(-1.0, 1.0);
+        let r = (1.0 - z * z).sqrt();
+        return Vec3::new(r * a.cos(), r * a.sin(), z);
+    }
+    
+    pub fn sqrt(&self) -> Vec3 {
+        Vec3::new(self.x.sqrt(), self.y.sqrt(), self.z.sqrt())
+    }
 }
 
 impl Add<Vec3> for Vec3 {
     type Output = Vec3;
     fn add(self, other: Vec3) -> Vec3 {
-        Vec3 { 
-            x: self.x + other.x, 
+        Vec3 {
+            x: self.x + other.x,
             y: self.y + other.y,
-            z: self.z + other.z
+            z: self.z + other.z,
         }
     }
 }
@@ -74,10 +81,10 @@ impl Add<Vec3> for Vec3 {
 impl Sub<Vec3> for Vec3 {
     type Output = Vec3;
     fn sub(self, other: Vec3) -> Vec3 {
-        Vec3 { 
-            x: self.x - other.x, 
+        Vec3 {
+            x: self.x - other.x,
             y: self.y - other.y,
-            z: self.z - other.z
+            z: self.z - other.z,
         }
     }
 }
@@ -85,32 +92,32 @@ impl Sub<Vec3> for Vec3 {
 impl Neg for Vec3 {
     type Output = Vec3;
     fn neg(self) -> Vec3 {
-        Vec3{
+        Vec3 {
             x: -self.x,
-            y: -self.y, 
-            z: -self.z
+            y: -self.y,
+            z: -self.z,
         }
     }
 }
 
-impl Mul<Vec3> for f64 {
+impl Mul<Vec3> for f32 {
     type Output = Vec3;
     fn mul(self, vector: Vec3) -> Vec3 {
-        Vec3{
+        Vec3 {
             x: self * vector.x,
-            y: self * vector.y, 
-            z: self * vector.z
+            y: self * vector.y,
+            z: self * vector.z,
         }
     }
 }
 
-impl Mul<f64> for Vec3 {
+impl Mul<f32> for Vec3 {
     type Output = Vec3;
-    fn mul(self, scalar: f64) -> Vec3 {
-        Vec3{
+    fn mul(self, scalar: f32) -> Vec3 {
+        Vec3 {
             x: self.x * scalar,
-            y: self.y * scalar, 
-            z: self.z * scalar
+            y: self.y * scalar,
+            z: self.z * scalar,
         }
     }
 }
@@ -119,21 +126,21 @@ impl Mul<f64> for Vec3 {
 impl Mul<Vec3> for Vec3 {
     type Output = Vec3;
     fn mul(self, other: Vec3) -> Vec3 {
-        Vec3{
+        Vec3 {
             x: self.x * other.x,
-            y: self.y * other.y, 
-            z: self.z * other.z
+            y: self.y * other.y,
+            z: self.z * other.z,
         }
     }
 }
 
-impl Div<f64> for Vec3 {
+impl Div<f32> for Vec3 {
     type Output = Vec3;
-    fn div(self, scalar: f64) -> Vec3 {
-        Vec3{
+    fn div(self, scalar: f32) -> Vec3 {
+        Vec3 {
             x: self.x / scalar,
-            y: self.y / scalar, 
-            z: self.z / scalar
+            y: self.y / scalar,
+            z: self.z / scalar,
         }
     }
 }
@@ -146,8 +153,8 @@ impl fmt::Display for Vec3 {
 
 #[cfg(test)]
 mod tests {
-    use assert_approx_eq::*;
     use super::*;
+    use assert_approx_eq::*;
 
     macro_rules! assert_vec3_equal {
         ($expected:expr, $actual:expr) => {
@@ -157,7 +164,6 @@ mod tests {
             assert_approx_eq!($expected.z, $actual.z, tolerance);
         };
     }
-    
     #[test]
     fn addition() {
         let vector1 = Vec3::new(1.0, 2.0, 3.0);
@@ -179,7 +185,7 @@ mod tests {
     #[test]
     fn negation() {
         let vector1 = Vec3::new(1.0, 2.0, 3.0);
-        let result = -vector1; 
+        let result = -vector1;
         let expected = Vec3::new(-1.0, -2.0, -3.0);
         assert_vec3_equal!(expected, result);
     }
@@ -229,7 +235,7 @@ mod tests {
     }
 
     #[test]
-    fn dot(){
+    fn dot() {
         let vector1 = Vec3::new(1.0, 2.0, 3.0);
         let vector2 = Vec3::new(1.0, 5.0, 7.0);
         let result = vector1.dot(vector2);
@@ -237,17 +243,16 @@ mod tests {
     }
 
     #[test]
-    fn cross(){
+    fn cross() {
         let vector1 = Vec3::new(1.0, 2.0, 3.0);
         let vector2 = Vec3::new(1.0, 5.0, 7.0);
         let result = vector1.cross(vector2);
         let expected = Vec3::new(-1.0, -4.0, 3.0);
         assert_vec3_equal!(expected, result);
-
     }
 
     #[test]
-    fn to_rgb(){
+    fn to_rgb() {
         let vector = Vec3::new(-1.0, 0.5, 1.4);
         let result = vector.to_rgb();
         let expected = [0u8, 127u8, 255u8];
@@ -255,7 +260,7 @@ mod tests {
     }
 
     #[test]
-    fn unit_vector(){
+    fn unit_vector() {
         let vector = Vec3::new(-1.0, 0.5, 1.4);
         let result = vector.unit_vector();
         let expected = Vec3::new(-0.55815, 0.27907, 0.78140);

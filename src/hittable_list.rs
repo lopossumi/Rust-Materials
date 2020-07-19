@@ -17,7 +17,7 @@ impl HittableList {
 }
 
 impl Hittable for HittableList {
-    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Record> {
+    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Record> {
         let mut temp_rec = Record::new(
             Point3::new(0.0, 0.0, 0.0),
             Vec3::new(0.0, 0.0, 0.0),

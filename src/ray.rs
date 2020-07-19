@@ -1,9 +1,10 @@
 use crate::vector::*;
 use crate::hittable::*;
 use crate::hittable_list::*;
+use rand::prelude::*;
 
-const T_MIN: f64 = 0.0001;
-const T_MAX: f64 = f64::MAX;
+const T_MIN: f32 = 0.0001;
+const T_MAX: f32 = f32::MAX;
 
 const COLOR_WHITE: Color = Color { x: 1.0, y: 1.0, z: 1.0};
 const COLOR_SKYBLUE: Color = Color { x: 0.5, y: 0.7, z: 1.0 };
@@ -21,15 +22,21 @@ impl Ray {
         }
     }
 
-    pub fn at(&self, distance: f64) -> Point3 {
+    pub fn at(&self, distance: f32) -> Point3 {
         self.origin + distance * self.direction
     }
 
-    pub fn color(&self, world: &HittableList) -> Color {
+    pub fn color(&self, world: &HittableList, rng: &mut ThreadRng, depth: i32) -> Color {
+        if depth <= 0 {
+            return Color::new(0.0, 0.0, 0.0);
+        }
+
         let t = world.hit(&self, T_MIN, T_MAX);
         match t {
             Some(record) => {
-                0.5 * (COLOR_WHITE + record.normal.unit_vector())
+                let target = record.p + record.normal + Vec3::random(rng);
+                0.5 * Ray::new(record.p, target-record.p).color(world, rng, depth - 1)
+                //(COLOR_WHITE + record.normal.unit_vector())
             }
 
             None => {
