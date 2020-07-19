@@ -52,7 +52,7 @@ PS D:\RustProjects\materials> cargo run
 Elapsed: 9.5592981s
 Done.
 ```
-So with 50 samples the rendering takes 9.6 seconds on a Ryzen 3400G. Not great, not terrible.
+With 50 samples the rendering takes 9.6 seconds on a Ryzen 3400G. Not great, not terrible.
 
 But wait, we are running it in debug mode. How about if we switch to release?
 ```
@@ -60,7 +60,7 @@ PS D:\RustProjects\materials> cargo run --release
 Elapsed: 246.4353ms
 Done.
 ```
-So we get almost a 40x speedup for free, just by remembering to use the right compiler flag!
+We get almost a 40x speedup for free, just by remembering to use the right compiler flag!
 
 Upping the resolution to 1920 x 1080, it takes 6.2 seconds on average to render two balls with 50 samples per pixel:
 ```
@@ -89,7 +89,7 @@ error[E0435]: attempt to use a non-constant value in a constant
 15 |     let mut colors: [[Color; image_width]; image_height];
    |                              ^^^^^^^^^^^ non-constant value
 ```
-So even though image_width is constant, the compiler can't know it (because we *could* pass in any ```u32``` value) and thus arrays are out of the question. Let's try vectors instead.
+Even though ```image_width``` is constant, the compiler can't know it (because we *could* pass in any ```u32``` value) and thus arrays are out of the question. Let's try vectors instead.
 
 A two-dimensional vector sounds like a mess of pointers, but how about a ```Vec<Color>``` and some smart indexing?
 ```rust
