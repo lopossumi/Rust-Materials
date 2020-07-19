@@ -64,4 +64,82 @@ PS D:\RustProjects\materials> cargo run --release
 Elapsed: 246.4353ms
 Done.
 ```
-So we get almost a 40x speedup for free, just by remembering to use the right compiler flag! With 50 samples per pixel and FullHD resolution it takes 6.2 seconds to render two balls on a single core.
+So we get almost a 40x speedup for free, just by remembering to use the right compiler flag!
+
+Upping the resolution to 1920 x 1080, it takes 6.2 seconds on average to render two balls with 50 samples per pixel:
+```
+PS D:\RustProjects\materials> cargo run --release
+    Finished release [optimized] target(s) in 0.11s
+     Running `target\release\rays.exe`
+Elapsed: 6.3509268s
+Done.
+```
+Maybe the image buffer is slowing us down? Let's move the rendering to its own file, create our own 2D array of ```Color``` structs first, and then the image:
+```rust
+pub fn render(
+    camera: &Camera,
+    world: &HittableList,
+    image_width: u32,
+    image_height: u32,
+    samples: u32,
+) -> RgbImage {
+    let mut colors: [[Color; image_width]; image_height];
+```
+```
+> Executing task: cargo build <
+
+   Compiling materials v0.1.0 (D:\RustProjects\materials)
+error[E0435]: attempt to use a non-constant value in a constant
+  --> src\render.rs:15:30
+   |
+15 |     let mut colors: [[Color; image_width]; image_height];
+   |                              ^^^^^^^^^^^ non-constant value
+```
+So even though image_width is constant, the compiler can't know it (because we *could* pass in any ```u32``` value) and thus arrays are out of the question. Let's try vectors instead.
+
+A two-dimensional vector sounds like a mess of pointers, but how about a ```Vec<Color>``` and some smart indexing?
+```rust
+    let colors: Vec<Color> = (0..(image_height * image_width))
+        .into_iter()
+        .map(|index| {
+            let x = index % image_width;
+            let y = index / image_width;
+
+            // return Color at (x, y)
+        })
+        .collect();
+
+    for (x, y, pixel) in buffer.enumerate_pixels_mut() {
+        let index: usize = (y * image_width) as usize + x as usize;
+        let color = colors.get(index).unwrap();
+        *pixel = Rgb(color.to_rgb());
+    }
+```
+```
+PS D:\RustProjects\materials> cargo run --release
+    Finished release [optimized] target(s) in 0.11s
+     Running `target\release\materials.exe`
+Elapsed: 6.121465s
+Done.
+```
+No change. But now that we have an iterator in the mix, we can just throw more cores at the problem with [rayon](https://crates.io/crates/rayon). This is actually a bit too easy - just change ```into_iter``` to ```into_par_iter```:
+```rust
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
+...
+    let colors: Vec<Color> = (0..(image_height * image_width))
+        .into_par_iter()
+        .map(|index| {
+            let x = index % image_width;
+            let y = index / image_width;
+
+            // return Color at (x, y)
+        })
+        .collect();
+```
+```
+PS D:\RustProjects\materials> cargo run --release
+    Finished release [optimized] target(s) in 0.10s
+     Running `target\release\materials.exe`
+Elapsed: 1.2618604s
+Done.
+```
